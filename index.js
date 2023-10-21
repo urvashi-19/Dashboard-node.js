@@ -1,36 +1,30 @@
 const express = require('express');
 const app = express();
-//middleware
-app.use(express.json())
-const urlRoute = require('./routes/url');
-const URL = require('./models/url');
-const {connectToMongoDB} = require('./connect');
-connectToMongoDB("mongodb://127.0.0.1:27017/short-url").then(()=>
-  console.log("connected to mongodb")
+const mongoose = require('mongoose');
+mongoose.connect('mongodb://127.0.0.1:27017/blogify').then(
+    e=>console.log('Mongodb connected')
 )
+const userRoute = require('./routes/user');
 
 
+//middleware for form
+app.use(express.urlencoded({extended:false}));
 
-app.use('/url' , urlRoute)
-app.get('/:shortId' , async(req , res)=>{
+//ejs middleware and views is folder contain all html and css file
+const path = require('path');
+app.set('view engine','ejs');
+app.set('views' ,path.resolve('./views') )
 
-    const shortId = req.params.shortId;
-    const entry = await URL.findOneAndUpdate(
-        {
-            shortId,
-        },
-        {
-            $push:{
-                visitHistory:{
-                 timestamp:   Date.now()
-                }
-            },
-        }
-    );
-    res.redirect(entry.redirectUrl);
-});
 
-const PORT = 8001;
-app.listen(PORT , ()=>
-    console.log(`Server is running at: ${PORT}`)
-)
+//routing
+app.get('/',(req , res)=>{
+    res.render('home');
+})
+
+app.use('/user' ,userRoute); //koi bhi page agar  /user se start ho
+
+
+const PORT = 8000;
+app.listen(PORT  , ()=>{
+    console.log(`Server started at ${PORT}`)
+})
